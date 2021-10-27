@@ -1,0 +1,8 @@
+Musics/*
+.classpath
+start.bat
+.settings/*
+*.class
+*.projects
+*.prefs
+*.project
