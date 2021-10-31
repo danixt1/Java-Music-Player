@@ -1,13 +1,18 @@
 package audioPlayer.main;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import audioPlayer.audio.AudioState;
+import audioPlayer.main.audio.AudioState;
 public class FileManager {
+	public static Level defaultLogLevel = Level.OFF;
+	private static Logger log =Logger.getLogger(FileManager.class.getName());
 	private String dir;
 	public FileManager() {
+		log.setLevel(defaultLogLevel);
 		dir = System.getProperty("user.dir");
-		System.out.println("fileManger " +dir);
+		log.info("Starting FileManager with directory "+dir);
 	}
 	/**
 	 * Change the directory to search musics, the default dir is from 'user.dir' property
@@ -15,8 +20,10 @@ public class FileManager {
 	 * */
 	public void setDir(String dir) {
 		if(new File(dir).isDirectory()) {
+			log.info("Setting Directory to "+dir);
 			this.dir = dir;
 		}else {
+			log.warning("Validation from directory has failed");
 			if(dir == null)
 				dir = System.getProperty("user.dir");
 		}
@@ -27,9 +34,11 @@ public class FileManager {
 	}
 	public Music getMusic(String path) {
 		try {
+			log.info("Getting Audio From "+path);
 			FilePath filePath = new FilePath(path);
 			return getMusic(filePath);
 		} catch (InvalidPathFormatException e) {
+			log.log(Level.WARNING,"Failed getting Audio",e);
 			return null;
 		}
 	}
@@ -38,6 +47,7 @@ public class FileManager {
 	 * */
 	public Music[] getMusics() {
 		String fileNames[] = getStringFilesFrom(dir);
+		log.info("Getting all musics from "+dir);
 		if(fileNames.length ==0)
 			return new Music[0];
 		ArrayList <Music> musics = new ArrayList<Music>();
@@ -63,6 +73,9 @@ public class FileManager {
 		}
 			
 		return names;
+	}
+	protected void setLoggerParent(Logger logger) {
+		FileManager.log.setParent(logger);
 	}
 	
 }

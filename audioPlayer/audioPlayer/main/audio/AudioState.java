@@ -1,4 +1,4 @@
-package audioPlayer.audio;
+package audioPlayer.main.audio;
 
 public enum AudioState {
 	SUCCESS,

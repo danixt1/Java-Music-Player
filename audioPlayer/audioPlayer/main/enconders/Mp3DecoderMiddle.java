@@ -1,9 +1,12 @@
-package audioPlayer.enconders;
+package audioPlayer.main.enconders;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import javazoom.jl.decoder.JavaLayerException;
 import javazoom.jl.player.JavaSoundAudioDevice;
 import javazoom.jl.player.advanced.*;
@@ -14,14 +17,14 @@ import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.UnsupportedTagException;
 
-import audioPlayer.audio.AudioListener;
-import audioPlayer.audio.AudioState;
 import audioPlayer.main.FilePath;
 import audioPlayer.main.MusicInfo;
 import audioPlayer.main.MusicInfoBuilder;
+import audioPlayer.main.audio.AudioListener;
+import audioPlayer.main.audio.AudioState;
 
-public class mp3Encoder extends Encoder {
-	
+public class Mp3DecoderMiddle extends DecoderMiddle {
+	private static Logger logger = Logger.getLogger(Mp3DecoderMiddle.class.getName());
 	private AdvancedPlayer player;
 	private InputStream stream;
 	private int actualPart =0;
@@ -40,23 +43,35 @@ public class mp3Encoder extends Encoder {
 	
 	private MusicInfoBuilder info = new MusicInfoBuilder();
 	
-	public mp3Encoder(FilePath path){
+	public Mp3DecoderMiddle(FilePath path){
 		super(path);
+		logger.setLevel(defaultLogLevel);
 		this.path = path;
-		audioDevice = new JavaSoundAudioDevice();
 		setHeader();
 	};
 	private void setHeader() {
+		logger.info("Starting to put infos from header in:"+path.getAbsPath());
 		Mp3File mp3Reader = null;
 		try {
 			mp3Reader = new Mp3File(path.getAbsPath());
 		} catch (UnsupportedTagException e) {
 			setState(AudioState.PROCESSING_ERROR);
+			logger.log(Level.WARNING,"Unsupported",e);
 		} catch (InvalidDataException e) {
 			setState(AudioState.NOT_AUDIO);
+			logger.log(Level.WARNING,"Not are audio exception returned",e);
 		} catch (IOException e) {
 			setState(AudioState.UNKNOWN);
+			logger.log(Level.WARNING,"IO Failure",e);
+		}catch(Exception e) {
+			setState(AudioState.UNKNOWN);
+			logger.log(Level.WARNING,"unrecognized failure",e);
 		}
+		if(state != AudioState.NOT_STARTED) {
+			logger.info("Header Failed");
+			return;
+		}
+		logger.info("Header readed with success");
 		setState(AudioState.SUCCESS);
 		lenght = (int) mp3Reader.getLengthInMilliseconds();
 		info.setFileName(path.getFileName());
@@ -72,7 +87,7 @@ public class mp3Encoder extends Encoder {
 			info.setTitle(tag.getTitle());
 			info.setAlbumImage(tag.getAlbumImage());
 			info.setYear(tag.getYear());
-		};
+		};			
 	}
 	private void execute() {
 		try {
@@ -80,6 +95,7 @@ public class mp3Encoder extends Encoder {
 		} catch (FileNotFoundException e) {
 			setState(AudioState.NOT_FOUND);
 		}
+		audioDevice = new JavaSoundAudioDevice();
 		try {
 			player = new AdvancedPlayer(stream,audioDevice);
 		} catch (JavaLayerException e) {
@@ -132,8 +148,11 @@ public class mp3Encoder extends Encoder {
 	@Override
 	public void setVolume(int volume) {
 		this.volume = volume;
-		if(audioDevice == null)
+		logger.info("Setting the volume to "+volume);
+		if(audioDevice == null) {
+			logger.warning("No AudioDevice, failed changing volume");
 			return;
+		}
 		//-80f  a 6f
 		float converted = volume/100f * 86f - 80;
 		audioDevice.setLineGain(converted);
@@ -204,5 +223,9 @@ public class mp3Encoder extends Encoder {
 	public void play(int t) {
 		setTime(t);
 		play();
+	}
+	@Override
+	protected void setLoggerParent(Logger parent) {
+		Mp3DecoderMiddle.logger = parent;
 	}
 }

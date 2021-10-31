@@ -1,30 +1,30 @@
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Level;
 
-import audioPlayer.audio.AudioListener;
-import audioPlayer.audio.AudioState;
 import audioPlayer.main.*;
+import audioPlayer.main.audio.AudioListener;
+import audioPlayer.main.audio.AudioState;
+import audioPlayer.main.enconders.DecoderMiddle;
 
 public class Start {
 	private static boolean exit = false;
 	private static Scanner inputer;
-	private static String dir = System.getProperty("user.dir") +File.separatorChar + "Musics";
+	private static String dir = System.getProperty("user.dir");
 	private static Player player;
 	public static void main(String[] args) {
 		player = new Player(dir);
+		System.out.println("Actual dir: "+dir);
 		player.setListener(new AudioListener() {
-			@Override
-			public void audioStarted() {
-				System.out.println("Audio starting");
-			};
 			@Override
 			public void audioFinished() {
 				System.out.println("Audio ended");
 			};
 			@Override
 			public void audioIoStateChange(AudioState a) {
-				System.out.println("changed to "+a);
+				if(a != AudioState.SUCCESS)
+				System.out.println("Error processing audio:"+a);
 			}
 		});
 		actions(new String[] {"help"});
@@ -39,6 +39,11 @@ public class Start {
 	private static void actions(String[] args) {
 		args[0] = args[0].toLowerCase();
 		switch(args[0]) {
+			case "set-dir":
+				if(args.length > 1)
+					player.setDir(args[1]);
+				System.out.println("Directory selected to "+args[1]);
+				break;
 			case "play":
 				if(args.length > 1) {
 					try {
@@ -58,19 +63,22 @@ public class Start {
 				System.out.println("Welcome to music player!\n");
 				System.out.println("Commands:");
 				System.out.println(
-						"\tplay <directory>: play a music or all musics in directory \n"
+						"\tplay: play a music in the selected directory \n"
+						+"\tplay <Integer>: Play a music in selected position(ms)\n"
 						+"\tvolume <Integer>: Set volume levels 0 -100\n"
 						+"\tset-time <Integer>: Set the time in milliseconds \n"
 						+"\tpause: Pause\n"
 						+"\tnext: Select next music\n"
+						+"\tback: Select previous music\n"
 						+"\tmusic-info: Return all infos from the music\n"
+						+"\tset-dir <String> Select the directory to search musics"
 						+"\thelp: Display this message\n"
 						+ "\texit: Exit application");
 				break;
 			case "info":
 				System.out.println("Using: \n\t jLayer 1.0 \n\t Mp3Agic by @mpatric source: https://github.com/mpatric/mp3agic");
 				System.out.println("Created by @danixt1");
-				System.out.println("respositore url:");
+				System.out.println("respositore url: https://github.com/danixt1/Java-Music-Player");
 				System.out.println("MIT License");
 				break;
 			case "exit":
@@ -127,7 +135,7 @@ public class Start {
 			};
 		};
 		if(lastValidPos > 0 && lastValidPos != text.length()-1) {
-			coms.add(text.substring(lastValidPos));
+			coms.add(text.substring(lastValidPos).replaceAll("\"",""));
 		}
 		if(coms.size() ==0 && text.length() > 0)
 			coms.add(text);
