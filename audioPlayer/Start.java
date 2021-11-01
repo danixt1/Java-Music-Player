@@ -1,12 +1,10 @@
-import java.io.File;
+
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.logging.Level;
 
 import audioPlayer.main.*;
 import audioPlayer.main.audio.AudioListener;
 import audioPlayer.main.audio.AudioState;
-import audioPlayer.main.enconders.DecoderMiddle;
 
 public class Start {
 	private static boolean exit = false;
@@ -43,6 +41,11 @@ public class Start {
 				if(args.length > 1)
 					player.setDir(args[1]);
 				System.out.println("Directory selected to "+args[1]);
+				break;
+			case "musics-info":
+				MusicInfo infos[] = player.getMusicsInfo();
+				for(MusicInfo info:infos)
+					System.out.println(info.toString() +"\n");
 				break;
 			case "play":
 				if(args.length > 1) {
@@ -114,7 +117,10 @@ public class Start {
 					System.out.println("Actual Volume: "+player.getVolume());
 				break;
 			case "music-info":
-				System.out.println(player.getMusicInfo().toString());
+				if(player.getMusicInfo() != null) {
+					System.out.println(player.getMusicInfo().toString());					
+				}else
+					System.out.println("No music");
 				if(player.isPlaying())
 					System.out.println("Actual position: "+player.getActualTime() + " ms");
 				break;

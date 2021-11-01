@@ -103,6 +103,7 @@ public class Mp3DecoderMiddle extends DecoderMiddle {
 		};
 		generateListeners();
 		try {
+			logger.fine("Audio started with success");
 			setState(AudioState.SUCCESS);
 			player.play(actualPart,Integer.MAX_VALUE);					
 		} catch (JavaLayerException e) {
@@ -110,25 +111,46 @@ public class Mp3DecoderMiddle extends DecoderMiddle {
 		};
 	}
 	@Override
+	public void play(int t) {
+		logger.info("playing music in selected postion");
+		if(isPaused) {
+			stop();
+			isPaused = false;
+		}
+		setTime(t);
+		play();
+	}
+	@Override
 	public void play() {
-		if(isPlaying) {
+		if(isPlaying && !isPaused) {
+			logger.info("Stopping music to start");
 			player.stop();
 		}
 		isPlaying = true;
-		execute();
+		if(!isPaused) {
+			logger.info("Playing music in position:"+actualPart);
+			execute();			
+		}else {
+			logger.info("Returning to play the music after paused");
+			isPaused = false;
+			player.pause();
+		}
 	}
 	@Override
 	public void pause() {
-		isPlaying = false;
+		logger.info("Order to pause sended");
+		if(!isPaused)
+			player.pause();
 		isPaused = true;
-		actualPart += convertToframes(audioDevice.getPosition());
-		player.stop();
+		isPlaying = false;
+		//actualPart += convertToframes(audioDevice.getPosition());
 	}
 
 	@Override
 	public void stop() {
 		if(player != null)
 			player.stop();
+		logger.info("Music stopped");
 		actualPart =0;
 		isPlaying = false;
 	}
@@ -155,7 +177,11 @@ public class Mp3DecoderMiddle extends DecoderMiddle {
 		}
 		//-80f  a 6f
 		float converted = volume/100f * 86f - 80;
-		audioDevice.setLineGain(converted);
+		try {
+			audioDevice.setLineGain(converted);
+		} catch (JavaLayerException e) {
+			setState(AudioState.PROCESSING_ERROR);
+		}
 	}
 
 	@Override
@@ -203,6 +229,7 @@ public class Mp3DecoderMiddle extends DecoderMiddle {
 		return state;
 	}
 	private void setState(AudioState state) {
+		logger.fine("state changed to: "+state.toString());
 		this.state = state;
 		if(listener != null) {
 			if(this.state != state)
@@ -218,11 +245,6 @@ public class Mp3DecoderMiddle extends DecoderMiddle {
 	@Override
 	public AudioListener getListener() {
 		return listener;
-	}
-	@Override
-	public void play(int t) {
-		setTime(t);
-		play();
 	}
 	@Override
 	protected void setLoggerParent(Logger parent) {

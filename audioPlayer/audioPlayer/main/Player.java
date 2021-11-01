@@ -62,6 +62,16 @@ public class Player extends Audio{
 	public int getVolume() {
 		return volumeGlobal;
 	}
+	public MusicInfo[] getMusicsInfo() {
+		MusicInfo[] infos = new MusicInfo[musics.length];
+		for(int index =0; index < musics.length;index++) {
+			infos[index] = musics[index].getMusicInfo();
+		};
+		return infos;
+	}
+	public int getActualIndex() {
+		return actualPosition;
+	}
 	/**
 	 *@param volume A value between 0 to 100
 	 * */
@@ -81,10 +91,13 @@ public class Player extends Audio{
 		}else
 			logger.info("Play ignored, is already playing");
 	}
+	/**
+	 * Return Music informations, case no music selected return null
+	 * */
 	public MusicInfo getMusicInfo() {
 		if(actualMusic != null)
 			return actualMusic.getMusicInfo();
-		return new MusicInfo();
+		return null;
 	}
 	public void nextMusic() {
 		logger.info("Changing to next music...");
